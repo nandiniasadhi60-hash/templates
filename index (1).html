@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Human Development Index Predictor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="atlas-dots" aria-hidden="true"></div>
+
+<main class="page">
+
+  <header class="hero">
+    <p class="eyebrow">Global Development Analytics</p>
+    <h1>Human Development Index<br>Predictor</h1>
+    <p class="hero-sub">
+      Estimate a country's HDI from four core indicators — life expectancy, schooling,
+      and income — using a regression model trained on UNDP data.
+    </p>
+  </header>
+
+  <section class="dashboard">
+
+    <form class="panel form-panel" id="hdi-form" action="/predict" method="POST" novalidate>
+
+      <h2 class="panel-title">Indicators</h2>
+
+      <div class="field">
+        <label for="life">
+          <span class="field-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 8.6c0 5.6-8.8 10.8-8.8 10.8S3.2 14.2 3.2 8.6a4.8 4.8 0 0 1 8.8-2.6 4.8 4.8 0 0 1 8.8 2.6Z"/></svg>
+          </span>
+          Life expectancy at birth
+        </label>
+        <div class="input-wrap">
+          <input type="number" step="any" min="0" max="100" id="life" name="life" placeholder="e.g. 72.4" required>
+          <span class="unit">years</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="expected">
+          <span class="field-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg>
+          </span>
+          Expected years of schooling
+        </label>
+        <div class="input-wrap">
+          <input type="number" step="any" min="0" max="25" id="expected" name="expected" placeholder="e.g. 13.8" required>
+          <span class="unit">years</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="mean">
+          <span class="field-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m12 3 9 4.5-9 4.5-9-4.5L12 3Z"/><path d="M6.5 10v4.5c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3V10"/></svg>
+          </span>
+          Mean years of schooling
+        </label>
+        <div class="input-wrap">
+          <input type="number" step="any" min="0" max="20" id="mean" name="mean" placeholder="e.g. 8.6" required>
+          <span class="unit">years</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="income">
+          <span class="field-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 15.5c0 1 1.1 1.8 2.5 1.8s2.5-.7 2.5-1.7c0-2.5-5-1.3-5-3.8 0-1 1.1-1.7 2.5-1.7s2.5.7 2.5 1.7M12 7.6v9"/></svg>
+          </span>
+          Gross national income per capita
+        </label>
+        <div class="input-wrap">
+          <input type="number" step="any" min="0" id="income" name="income" placeholder="e.g. 18400" required>
+          <span class="unit">PPP $</span>
+        </div>
+      </div>
+
+      <button type="submit" class="predict-btn" id="predict-btn">
+        <span class="btn-label">Predict HDI</span>
+        <span class="btn-spinner" aria-hidden="true"></span>
+      </button>
+
+      <p class="form-error" id="form-error" role="alert"></p>
+    </form>
+
+    <section class="panel result-panel" id="result-panel" aria-live="polite">
+
+      <h2 class="panel-title">Predicted score</h2>
+
+      <div class="gauge-wrap">
+        <svg viewBox="0 0 220 140" class="gauge" id="gauge-svg">
+          <path d="M20 120 A 90 90 0 0 1 200 120" class="gauge-track"/>
+          <path d="M20 120 A 90 90 0 0 1 200 120" class="gauge-arc" id="gauge-arc"/>
+        </svg>
+        <div class="gauge-readout">
+          <span class="gauge-score" id="gauge-score">—</span>
+          <span class="gauge-tier" id="gauge-tier">Awaiting input</span>
+        </div>
+      </div>
+
+      <ul class="tier-legend">
+        <li class="tier-swatch low">Low<span>&lt; 0.550</span></li>
+        <li class="tier-swatch medium">Medium<span>0.550–0.699</span></li>
+        <li class="tier-swatch high">High<span>0.700–0.799</span></li>
+        <li class="tier-swatch very-high">Very High<span>≥ 0.800</span></li>
+      </ul>
+
+      <p class="result-note" id="result-note">
+        Fill in the four indicators and select <strong>Predict HDI</strong> to generate a score.
+      </p>
+
+      {% if prediction_text %}
+      <p class="server-fallback-result">{{ prediction_text }}</p>
+      {% endif %}
+      {% if error_text %}
+      <p class="server-fallback-error">{{ error_text }}</p>
+      {% endif %}
+
+    </section>
+
+  </section>
+
+  <footer class="page-footer">
+    <p>Model: linear regression trained on UNDP Human Development Index data · For educational and analytical use.</p>
+  </footer>
+
+</main>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
